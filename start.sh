@@ -12,7 +12,7 @@ init(){
     echo "初始化完成。"
 }
 # 启动gunicorn服务
-cd /srv/InterviewAssessment
+cd /srv/InterviewAssesment
 source .venv/bin/activate
 git pull
 gunicorn --timeout 300 -w 1 -b 0.0.0.0:18888 app:app
