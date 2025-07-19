@@ -1,6 +1,5 @@
 from flask import Flask
 from flask_cors import CORS
-
 from routes.report_route import report_bp
 from routes.resume_route import resume_bp
 from routes.answer_route import answer_bp
