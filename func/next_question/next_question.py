@@ -1,9 +1,9 @@
 from src.llm_interaction.spark_chatbot import SparkChat
 import json  # 必须导入json模块
 
-def reporter(infor):
+def next_ques(infor):   # infor是历史记录
     # 初始化参数
-    with open('func/generate_reports/prompt.txt', 'r', encoding='utf-8') as f:
+    with open('func/next_question/prompt.txt', 'r', encoding='utf-8') as f:
         prompt = f.read()
     appid = "80a17aae"
     api_secret = "OTkwYjQzNDU5MWQ4NzdjNzY0YjdhNWE1"
@@ -18,7 +18,7 @@ def reporter(infor):
     text_list = [
         {"role": "system",
          "content": prompt},
-        {"role": "user", "content": json.dumps(infor, ensure_ascii=False, indent=2)}
+        {"role": "user", "content":json.dumps(infor, ensure_ascii=False, indent=2)}
     ]
 
     response = spark_chat.spark_main(text_list)

@@ -1,18 +1,17 @@
 from flask import request, Blueprint, jsonify
-from func.generate_resume.resume_parser import resume_paser
 import Tools
-import json
 import logging
-# from utils.process_resume import process_response
+import json
+from func.next_question.next_question import next_ques
 
-resume_bp = Blueprint('resume_bp', __name__)
+next_bp = Blueprint('next_bp', __name__)
 
-# 给我json格式的用户基本信息
-@resume_bp.route('/resume', methods=['POST'])
-def resume():
+# 给我json格式的问题和用户回答
+@next_bp.route('/next_ques', methods=['POST'])
+def question():
     try:
         requestData = request.json
-        response = resume_paser(requestData)
+        response = next_ques(requestData)
         curTime = Tools.GetTime()
         retObj = {
             "statusCode": 1,
@@ -20,7 +19,7 @@ def resume():
             "response": response
         }
         retObj = process_response(retObj)
-        logging.info(f"[{curTime}]Resume generation successed.")
+        logging.info(f"[{curTime}]next question successed.")
         return jsonify(retObj)
 
     except Exception as e:
@@ -102,4 +101,3 @@ def process_response(retObj):
         print(f"处理response时出错: {str(e)}")
 
     return retObj
-

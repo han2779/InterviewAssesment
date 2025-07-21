@@ -1,9 +1,9 @@
 from src.llm_interaction.spark_chatbot import SparkChat
-import json
+import json  # 必须导入json模块
 
-def answer_evaluation(infor):   # infor是一个字典，包括问题原型和用户回答内容
+def first_ques(infor):      # infor是不足之处的描述性语句
     # 初始化参数
-    with open('func/speech_evaluation/prompt.txt', 'r', encoding='utf-8') as f:
+    with open('func/first_question/prompt.txt', 'r', encoding='utf-8') as f:
         prompt = f.read()
     appid = "80a17aae"
     api_secret = "OTkwYjQzNDU5MWQ4NzdjNzY0YjdhNWE1"
@@ -23,3 +23,4 @@ def answer_evaluation(infor):   # infor是一个字典，包括问题原型和�
 
     response = spark_chat.spark_main(text_list)
     return response
+

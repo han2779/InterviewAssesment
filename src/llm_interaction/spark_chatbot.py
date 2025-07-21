@@ -4,12 +4,15 @@ import datetime
 import hashlib
 import hmac
 import json
-import ssl
 import time
-from urllib.parse import urlparse, urlencode
-from wsgiref.handlers import format_date_time
+from urllib.parse import urlparse
+import ssl
+from datetime import datetime
 from time import mktime
+from urllib.parse import urlencode
+from wsgiref.handlers import format_date_time
 import websocket
+
 
 class SparkChat:
     def __init__(self, appid, api_key, api_secret, Spark_url, domain):
@@ -32,7 +35,7 @@ class SparkChat:
             self.Spark_url = Spark_url
 
         def create_url(self):
-            now = datetime.datetime.now()
+            now = datetime.now()
             date = format_date_time(mktime(now.timetuple()))
 
             signature_origin = "host: " + self.host + "\n"
@@ -53,11 +56,11 @@ class SparkChat:
             }
             return self.Spark_url + '?' + urlencode(v)
 
-    # WebSocket回调函数
+    # Websocket回调函数
     def _on_error(self, ws, error):
         print("### error:", error)
 
-    def _on_close(self, ws, close_status_code, close_msg):
+    def _on_close(self, ws, one, two):
         pass
 
     def _on_open(self, ws):
@@ -107,9 +110,8 @@ class SparkChat:
 
     def checklen(self):
         while self.getlength() > 8000 and len(self.text_list) > 0:
-            self.text_list.pop(1)  # 保留系统消息
+            self.text_list.pop(1)   # 保留系统消息
 
-    # 核心函数：完全恢复你原来的代码逻辑
     def spark_main(self, text_list):
         self.answer = ""
         self.text_list = text_list
@@ -124,14 +126,11 @@ class SparkChat:
                                     on_error=lambda ws, err: self._on_error(ws, err),
                                     on_close=lambda ws, *args: self._on_close(ws, *args),
                                     on_open=lambda ws: self._on_open(ws))
-
-        # 移除了timeout参数，恢复原始调用
         ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
-
         return self.answer
 
 
-# 测试代码
+# 在其他文件中使用
 if __name__ == '__main__':
     # 初始化参数
     appid = "80a17aae"
@@ -158,3 +157,4 @@ if __name__ == '__main__':
         text_list = spark_chat.getText("assistant", response)
         user_input = input("\n" + "我:")
         text_list = spark_chat.getText("user", user_input)
+

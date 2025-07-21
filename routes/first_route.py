@@ -1,23 +1,23 @@
 from flask import request, Blueprint, jsonify
 import Tools
 import logging
-from func.speech_evaluation.answer_evaluation import answer_evaluation
+from func.first_question.first import first_ques
 
-answer_bp = Blueprint('answer_bp', __name__)
+first_bp = Blueprint('first_bp', __name__)
 
 # 给我json格式的问题和用户回答
-@answer_bp.route('/answer_evaluation', methods=['POST'])
-def answer_evalue():
+@first_bp.route('/first_ques', methods=['POST'])
+def question():
     try:
         requestData = request.json
-        response = answer_evaluation(requestData)
+        response = first_ques(requestData)
         curTime = Tools.GetTime()
         retObj = {
             "statusCode": 1,
             "requestTime": curTime,
             "response": response
         }
-        logging.info(f"[{curTime}]answer evaluation successed.")
+        logging.info(f"[{curTime}]first question successed.")
         return jsonify(retObj)
 
     except Exception as e:
