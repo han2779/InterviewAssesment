@@ -60,8 +60,10 @@ class SparkChat:
     def _on_error(self, ws, error):
         print("### error:", error)
 
-    def _on_close(self, ws, one, two):
-        pass
+    def _on_close(self, ws, close_status_code, close_msg):
+        print("### closed ###")
+        print("Close status code:", close_status_code)
+        print("Close message:", close_msg)
 
     def _on_open(self, ws):
         thread.start_new_thread(self._run, (ws,))
@@ -121,11 +123,13 @@ class SparkChat:
         websocket.enableTrace(False)
         wsUrl = wsParam.create_url()
 
-        ws = websocket.WebSocketApp(wsUrl,
-                                    on_message=lambda ws, msg: self._on_message(ws, msg),
-                                    on_error=lambda ws, err: self._on_error(ws, err),
-                                    on_close=lambda ws, *args: self._on_close(ws, *args),
-                                    on_open=lambda ws: self._on_open(ws))
+        ws = websocket.WebSocketApp(
+            wsUrl,
+            on_message=self._on_message,
+            on_error=self._on_error,
+            on_close=self._on_close,  # ✅ 直接传方法，不要用 lambda
+            on_open=self._on_open
+        )
         ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
         return self.answer
 
