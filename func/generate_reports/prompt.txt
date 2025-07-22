@@ -17,7 +17,7 @@
           "logical_rigor": "",
           "completeness": "",
           "technical_correctness": "",
-          "score": 0
+          "score": 0(整数，百分制)
         },
         "expression_analysis": {
           "dominant_emotion": "",

@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 # 允许所有域名访问所有路由（默认行为）
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, supports_credentials=True)
 
 app.register_blueprint(report_bp, url_prefix='/interview')
 app.register_blueprint(resume_bp, url_prefix='/select_of_resume')
