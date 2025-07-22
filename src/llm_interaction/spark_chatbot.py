@@ -1,130 +1,79 @@
-import _thread as thread
-import base64
-import datetime
-import hashlib
-import hmac
+# encoding: UTF-8
 import json
-import time
-from urllib.parse import urlparse
-import ssl
-from datetime import datetime
-from time import mktime
-from urllib.parse import urlencode
-from wsgiref.handlers import format_date_time
-import websocket
-
+import requests
 
 class SparkChat:
-    def __init__(self, appid, api_key, api_secret, Spark_url, domain):
-        self.appid = appid
-        self.api_key = api_key
-        self.api_secret = api_secret
-        self.Spark_url = Spark_url
-        self.domain = domain
-        self.answer = ""
-        self.sid = ''
-        self.text_list = []
+    def __init__(self):
+        # 请替换为你的 API Key，获取地址：https://console.xfyun.cn/services/bmx1
+        self.api_key = "Bearer jEufuoytHtjaCPiPhSwI:QTJzAkVfJgAupdmtBiTG"
+        self.url = "https://spark-api-open.xf-yun.com/v1/chat/completions"
 
-    class Ws_Param:
-        def __init__(self, APPID, APIKey, APISecret, Spark_url):
-            self.APPID = APPID
-            self.APIKey = APIKey
-            self.APISecret = APISecret
-            self.host = urlparse(Spark_url).netloc
-            self.path = urlparse(Spark_url).path
-            self.Spark_url = Spark_url
-
-        def create_url(self):
-            now = datetime.now()
-            date = format_date_time(mktime(now.timetuple()))
-
-            signature_origin = "host: " + self.host + "\n"
-            signature_origin += "date: " + date + "\n"
-            signature_origin += "GET " + self.path + " HTTP/1.1"
-
-            signature_sha = hmac.new(self.APISecret.encode('utf-8'), signature_origin.encode('utf-8'),
-                                     digestmod=hashlib.sha256).digest()
-            signature_sha_base64 = base64.b64encode(signature_sha).decode(encoding='utf-8')
-
-            authorization_origin = f'api_key="{self.APIKey}", algorithm="hmac-sha256", headers="host date request-line", signature="{signature_sha_base64}"'
-            authorization = base64.b64encode(authorization_origin.encode('utf-8')).decode(encoding='utf-8')
-
-            v = {
-                "authorization": authorization,
-                "date": date,
-                "host": self.host
-            }
-            return self.Spark_url + '?' + urlencode(v)
-
-    # Websocket回调函数
-    def _on_error(self, ws, error):
-        print("### error:", error)
-
-    def _on_close(self, ws, one, two):
-        print(" ")
-
-    def _on_open(self, ws):
-        thread.start_new_thread(self._run, (ws,))
-
-    def _run(self, ws, *args):
-        data = json.dumps(self._gen_params())
-        ws.send(data)
-
-    def _on_message(self, ws, message):
-        data = json.loads(message)
-        code = data['header']['code']
-        if code != 0:
-            print(f'请求错误: {code}, {data}')
-            ws.close()
-        else:
-            self.sid = data["header"]["sid"]
-            choices = data["payload"]["choices"]
-            status = choices["status"]
-            content = choices["text"][0]["content"]
-            self.answer += content
-            if status == 2:
-                ws.close()
-
-    def _gen_params(self):
-        return {
-            "header": {"app_id": self.appid, "uid": "1234"},
-            "parameter": {
-                "chat": {
-                    "domain": self.domain,
-                    "temperature": 0.8,
-                    "max_tokens": 2048,
-                    "top_k": 5,
-                    "auditing": "default"
+    def get_answer(self, message):
+        headers = {
+            'Authorization': self.api_key,
+            'content-type': "application/json"
+        }
+        body = {
+            "model": "4.0Ultra",
+            "user": "user_id",
+            "messages": message,
+            "stream": True,
+            "tools": [
+                {
+                    "type": "web_search",
+                    "web_search": {
+                        "enable": True,
+                        "search_mode": "deep"
+                    }
                 }
-            },
-            "payload": {"message": {"text": self.text_list}}
+            ]
         }
 
-    def getText(self, role, content):
-        self.text_list.append({"role": role, "content": content})
-        self._checklen()
-        return self.text_list
+        full_response = ""
+        isFirstContent = True
 
-    def _getlength(self):
-        return sum(len(content["content"]) for content in self.text_list)
+        response = requests.post(url=self.url, json=body, headers=headers, stream=True)
+        for chunks in response.iter_lines():
+            if chunks and '[DONE]' not in str(chunks):
+                data_org = chunks[6:]  # 去除事件前缀
+                try:
+                    chunk = json.loads(data_org)
+                    text = chunk['choices'][0]['delta']
+                    if 'content' in text and text['content']:
+                        content = text["content"]
+                        if isFirstContent:
+                            isFirstContent = False
+                        full_response += content
+                except json.JSONDecodeError:
+                    continue  # 忽略无法解析的片段
+        return full_response
 
-    def _checklen(self):
-        while self._getlength() > 8000 and len(self.text_list) > 0:
-            self.text_list.pop(0)
+    def get_text(self, text, role, content):
+        text.append({"role": role, "content": content})
+        return text
 
-    def spark_main(self, text_list):
-        self.answer = ""
-        self.text_list = text_list
-        self._checklen()
+    def get_length(self, text):
+        return sum(len(content["content"]) for content in text)
 
-        wsParam = self.Ws_Param(self.appid, self.api_key, self.api_secret, self.Spark_url)
-        websocket.enableTrace(False)
-        wsUrl = wsParam.create_url()
+    def check_len(self, text):
+        while self.get_length(text) > 11000:
+            del text[0]
+        return text
 
-        ws = websocket.WebSocketApp(wsUrl,
-                                    on_message=lambda ws, msg: self._on_message(ws, msg),
-                                    on_error=lambda ws, err: self._on_error(ws, err),
-                                    on_close=lambda ws, *args: self._on_close(ws, *args),
-                                    on_open=lambda ws: self._on_open(ws))
-        ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
-        return self.answer
+    def spark_main(self, chat_history):
+        # 深拷贝聊天历史，避免修改原始数据
+        chat_history = [dict(d) for d in chat_history]
+        user_input = next((item['content'] for item in chat_history if item['role'] == 'user'), '')
+        # 清除历史中的 user 和 assistant 内容，仅保留 system
+        filtered_history = [item for item in chat_history if item['role'] == 'system']
+
+        # 添加用户输入并检查长度
+        self.get_text(filtered_history, "user", user_input)
+        self.check_len(filtered_history)
+
+        # 获取模型回复
+        response = self.get_answer(filtered_history)
+        # 添加回复到历史
+        self.get_text(filtered_history, "assistant", response)
+
+        return response

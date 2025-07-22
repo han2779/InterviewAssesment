@@ -60,10 +60,8 @@ class SparkChat:
     def _on_error(self, ws, error):
         print("### error:", error)
 
-    def _on_close(self, ws, close_status_code, close_msg):
-        print("### closed ###")
-        print("Close status code:", close_status_code)
-        print("Close message:", close_msg)
+    def _on_close(self, ws, one, two):
+        print(" ")
 
     def _on_open(self, ws):
         thread.start_new_thread(self._run, (ws,))
@@ -104,61 +102,29 @@ class SparkChat:
 
     def getText(self, role, content):
         self.text_list.append({"role": role, "content": content})
-        self.checklen()
+        self._checklen()
         return self.text_list
 
-    def getlength(self):
+    def _getlength(self):
         return sum(len(content["content"]) for content in self.text_list)
 
-    def checklen(self):
-        while self.getlength() > 8000 and len(self.text_list) > 0:
-            self.text_list.pop(1)   # 保留系统消息
+    def _checklen(self):
+        while self._getlength() > 8000 and len(self.text_list) > 0:
+            self.text_list.pop(0)
 
     def spark_main(self, text_list):
         self.answer = ""
         self.text_list = text_list
-        self.checklen()
+        self._checklen()
 
         wsParam = self.Ws_Param(self.appid, self.api_key, self.api_secret, self.Spark_url)
         websocket.enableTrace(False)
         wsUrl = wsParam.create_url()
 
-        ws = websocket.WebSocketApp(
-            wsUrl,
-            on_message=self._on_message,
-            on_error=self._on_error,
-            on_close=self._on_close,  # ✅ 直接传方法，不要用 lambda
-            on_open=self._on_open
-        )
+        ws = websocket.WebSocketApp(wsUrl,
+                                    on_message=lambda ws, msg: self._on_message(ws, msg),
+                                    on_error=lambda ws, err: self._on_error(ws, err),
+                                    on_close=lambda ws, *args: self._on_close(ws, *args),
+                                    on_open=lambda ws: self._on_open(ws))
         ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
         return self.answer
-
-
-# 在其他文件中使用
-if __name__ == '__main__':
-    # 初始化参数
-    appid = "80a17aae"
-    api_secret = "OTkwYjQzNDU5MWQ4NzdjNzY0YjdhNWE1"
-    api_key = "bb6c27f70f73b00afe59e185f8f4c1a4"
-    domain = "4.0Ultra"
-    Spark_url = "wss://spark-api.xf-yun.com/v4.0/chat"
-
-    # 创建实例
-    spark_chat = SparkChat(appid, api_key, api_secret, Spark_url, domain)
-
-    # 构造对话历史
-    text_list = [
-        {"role": "system", "content": "你现在扮演面试官"},
-        {"role": "user", "content": "面试官您好，我已经准备好了。"}
-    ]
-
-    while True:
-        # 获取回答
-        response = spark_chat.spark_main(text_list)
-        print("\n星火:", response)
-
-        # 添加新对话并继续
-        text_list = spark_chat.getText("assistant", response)
-        user_input = input("\n" + "我:")
-        text_list = spark_chat.getText("user", user_input)
-
