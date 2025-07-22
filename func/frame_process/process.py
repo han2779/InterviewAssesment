@@ -18,7 +18,7 @@ face_mesh = mp_face_mesh.FaceMesh(
 LEFT_EYE = [33, 160, 158, 133, 153, 144]  # 左眼轮廓点
 RIGHT_EYE = [362, 385, 387, 263, 373, 380]  # 右眼轮廓点
 MOUTH_OUTER = [78, 308]  # 嘴角外侧点
-MOUTH_INNER = [13, 14]  # 嘴唇内侧点
+MOUTH_INNER = [13, 14]  # 唇唇内侧点
 LEFT_EYEBROW = [70, 63, 105, 66]  # 左眉毛点
 RIGHT_EYEBROW = [300, 293, 334, 296]  # 右眉毛点
 FOREHEAD = [10, 67, 109, 338]  # 额头参考点
@@ -47,19 +47,16 @@ def analyze_expression(image):
     landmarks = results.multi_face_landmarks[0].landmark
     h, w, _ = image.shape
 
-    # 1. 是否微笑 (通过嘴唇宽度变化判断)
-    mouth_left = [landmarks[i].x * w for i in MOUTH_OUTER[:1]]
-    mouth_right = [landmarks[i].x * w for i in MOUTH_OUTER[1:]]
-    mouth_width = abs(mouth_left[0] - mouth_right[0])
+    # 1. 是否微笑 (通过嘴唇宽度变化和高度变化判断)
+    mouth_left_outer = landmarks[MOUTH_OUTER[0]].x * w
+    mouth_right_outer = landmarks[MOUTH_OUTER[1]].x * w
+    mouth_width = abs(mouth_left_outer - mouth_right_outer)
 
-    # 嘴唇高度变化
     upper_lip = landmarks[MOUTH_INNER[0]].y * h
     lower_lip = landmarks[MOUTH_INNER[1]].y * h
     mouth_height = abs(upper_lip - lower_lip)
 
     is_smiling = mouth_width > 0.15 * w and mouth_height < 0.03 * h
-
-
 
     # 3. 眉毛活动强度
     def eyebrow_strength(eyebrow_points, forehead_points):
@@ -89,7 +86,7 @@ def analyze_expression(image):
     eyebrow_left_x = landmarks[LEFT_EYEBROW[0]].x
     eyebrow_right_x = landmarks[RIGHT_EYEBROW[0]].x
     eyebrow_distance = abs(eyebrow_left_x - eyebrow_right_x)
-    is_frowning = eyebrow_distance < 0.25  # 值越小表示皱眉越紧
+    is_frowning = eyebrow_distance < 0.15  # 值越小表示皱眉越紧
 
     # 6. 当前表情 (简化版)
     expression = "normal"
@@ -107,4 +104,6 @@ def analyze_expression(image):
         "is_eye_contact": bool(is_eye_contact),
         "is_frowning": bool(is_frowning)
     }
+
+
 
