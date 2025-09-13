@@ -3,18 +3,28 @@ import json  # 必须导入json模块
 
 def suggestion(infor):      # infor是不足之处的描述性语句
     # 初始化参数
-    with open('func/generate_suggestion/prompt.txt', 'r', encoding='utf-8') as f:
-        prompt = f.read()
-        # 创建实例
-        spark_chat = SparkChat()
-        print(infor)
-        # 构造对话历史 - 使用json.dumps转换字典为字符串
-        text_list = [
-            {"role": "system",
-             "content": prompt},
-            {"role": "user", "content": json.dumps(infor, ensure_ascii=False, indent=2)}
-        ]
-        print(text_list)
-        response = spark_chat.spark_main(text_list)
-        return response
+    prompt = """我会给你几句描述我学习短板的句子，然后你提炼出我的不足之处，对于每个不足之处，分别给出建议、学习方向、学习资源（带有超链接）。
+返回要求：
+1. 仅输出纯文本，不能是markdown格式，一定不包含任何多余文字、注释。
+2. 结构必须包含以下字段：
+"aspect"：字符串，描述主题。
+"suggestions"：数组，包含建议内容（字符串元素）。
+"learningDirections"：数组，包含学习方向（字符串元素）。
+"learningResources"：数组，包含学习资源（字符串元素）。
+3. 确保格式合法（引号使用双引号，逗号分隔正确，括号匹配）。
+最终输出示例如：{"aspect":"model_training_issues","suggestions":["学习使用虚拟环境和依赖管理工具来简化环境配置流程。","掌握常用的深度学习超参数调整技巧，如学习率调度、批量大小调整等。","通过实践项目加深对面向对象编程的理解和应用。"],"learningDirections":["熟悉 Python 虚拟环境和 conda 环境管理。","研究深度学习模型的训练策略和优化方法。","学习面向对象分析与设计原则，并应用于实际编程中。"],"learningResources":["https://docs.python.org/3/tutorial/venv.html","https://towardsdatascience.com/hyperparameter-optimization-with-random-search-cross-validation-483fc617925a","https://www.coursera.org/learn/object-oriented-javascript"]}
+4. 最后请保证是纯文本形式，我需要你给我的数据直接能以字符串的形式给前端解析为json数据，所以无需任何换行以及其它符号，尤其要删除开头和结尾的```json\n，还有不能出现任何‘\'
+"""
+    # 创建实例
+    spark_chat = SparkChat()
+    print(infor)
+    # 构造对话历史 - 使用json.dumps转换字典为字符串
+    text_list = [
+        {"role": "system",
+         "content": prompt},
+        {"role": "user", "content": json.dumps(infor, ensure_ascii=False, indent=2)}
+    ]
+    print(text_list)
+    response = spark_chat.spark_main(text_list)
+    return response
 

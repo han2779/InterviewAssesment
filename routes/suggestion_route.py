@@ -11,7 +11,8 @@ def suggest():
         # print("111")
         requestData = request.json
         print(requestData)
-        response = suggestion(requestData)  # 此时是字符串
+        content = requestData['problem']
+        response = suggestion(content)  # 此时是字符串
         print(response)
         curTime = Tools.GetTime()
         retObj = {

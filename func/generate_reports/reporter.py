@@ -3,17 +3,83 @@ import json  # 必须导入json模块
 
 def reporter(infor):
     # 初始化参数
-    with open('func/generate_reports/prompt.txt', 'r', encoding='utf-8') as f:
-        prompt = f.read()
-        # 创建实例
-        spark_chat = SparkChat()
-        print(infor)
-        # 构造对话历史 - 使用json.dumps转换字典为字符串
-        text_list = [
-            {"role": "system",
-             "content": prompt},
-            {"role": "user", "content": json.dumps(infor, ensure_ascii=False, indent=2)}
+    prompt = """from src.llm_interaction.spark_chatbot import SparkChat
+import json  # 必须导入json模块
+
+def reporter(infor):
+    # 初始化参数
+    prompt = "你是一名专业的面试分析师。你的任务是根据用户提供的结构化格式的面试记录，生成包含逐轮对话分析和总体报告的json输出。",
+回答规范：
+1.回答必须遵守给出的json样例格式，且仅需提供json格式的内容用于解析，不添加任何额外说明。
+2.回答的json格式包括逐轮对话分析和总体报告。每轮对话分析需要详细列出问题、答案、回答准确率评估（含匹配度、逻辑严谨性、完整性、技术/知识正确性及评分）、表情状况分析。总体报告则涵盖整体表现总览、总回答准确率、整体表情状况、最亮点问题和最薄弱问题。
+3.每个章节有明确的数据结构要求：'round_analysis'数组中每个对象代表一轮对话的分析，而'overall_report'对象总结整个面试过程的表现并指出关键问题。
+输出格式实例：
+{
+    "round_analysis": [
+      {
+        "round_number": 0,
+        "question": "",
+        "answer": "",
+        "accuracy_evaluation": {
+          "matching_degree": "",
+          "logical_rigor": "",
+          "completeness": "",
+          "technical_correctness": "",
+          "score": 0(整数，百分制)
+        },
+        "expression_analysis": {
+          "dominant_emotion": "",
+          "intensity_duration": "",
+          "rationality_analysis": ""
+        }
+      }
+    ],
+    "overall_report": {
+      "summary": {
+        "performance_overview": "",
+        "average_accuracy_score": "",
+        "expression_pattern": ""
+      },
+      "key_issues": {
+        "top_performance": [
+          {
+            "round_number": 0,
+            "problem_summary": "",
+            "strengths": ""
+          }
+        ],
+        "weak_performance": [
+          {
+            "round_number": 0,
+            "problem_summary": "",
+            "weakness_analysis": ""
+          }
         ]
-        print(text_list)
-        response = spark_chat.spark_main(text_list)
-        return response
+      }
+    }
+  }"
+    # 创建实例
+    spark_chat = SparkChat()
+    print(infor)
+    # 构造对话历史 - 使用json.dumps转换字典为字符串
+    text_list = [
+        {"role": "system",
+         "content": prompt},
+        {"role": "user", "content": json.dumps(infor, ensure_ascii=False, indent=2)}
+    ]
+    print(text_list)
+    response = spark_chat.spark_main(text_list)
+    return response
+"""
+    # 创建实例
+    spark_chat = SparkChat()
+    print(infor)
+    # 构造对话历史 - 使用json.dumps转换字典为字符串
+    text_list = [
+        {"role": "system",
+         "content": prompt},
+        {"role": "user", "content": json.dumps(infor, ensure_ascii=False, indent=2)}
+    ]
+    print(text_list)
+    response = spark_chat.spark_main(text_list)
+    return response
